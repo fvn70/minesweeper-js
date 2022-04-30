@@ -1,10 +1,16 @@
 .App {
+  display: flex;
   text-align: center;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  /*background-color: #282c34;*/
 }
 
 .App-logo {
-  height: 40vmin;
+  height: 25px;
   pointer-events: none;
+  margin: 10px;
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -14,19 +20,18 @@
 }
 
 .App-header {
-  background-color: #282c34;
-  min-height: 100vh;
+  /*background-color: #cdb65c;*/
+  height: 36px;
+  width: 100%;
+  /*min-height: 100vh;*/
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
   justify-content: center;
-  font-size: calc(10px + 2vmin);
+  font-size: 1.2rem;
+  /*font-size: calc(10px + 2vmin);*/
   font-family: Roboto, sans-serif;
   color: white;
-}
-
-.App-link {
-  color: #61dafb;
 }
 
 @keyframes App-logo-spin {
@@ -37,3 +42,52 @@
     transform: rotate(360deg);
   }
 }
+
+.Game {
+  background-color: #282c34;
+  border: 2px solid red;
+  box-shadow: 0 0 4px 2px red;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 220px;
+  height: 320px;
+}
+
+.Panel {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+  align-items: center;
+  height: 36px;
+  width: 100%;
+}
+
+.Field {
+  /*background-color: #cdb65c;*/
+  display: flex;
+  flex-wrap: wrap;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  flex: 0 0 15px;
+  width: 90%;
+  margin: 10px;
+}
+
+.cell {
+  background-color: black;
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 2px solid #282c34;
+}
+
+.FlagsCounter {
+  color: red;
+}
+
+.Timer {
+  color: green;
+}
+
