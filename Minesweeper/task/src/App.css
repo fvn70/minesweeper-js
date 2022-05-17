@@ -81,8 +81,8 @@
 .cell-open,
 .cell-mine,
 .cell-mark {
-  background-color: black;
-  color: red;
+  background-color: rgba(0, 100, 0, 0.5);
+  color: white;
   display: inline-block;
   width: 20px;
   height: 20px;
@@ -91,6 +91,7 @@
 }
 
 .cell-open {
+  background-color: #282c34;
   border: 2px solid red;
   box-shadow: 0 0 4px 2px red;
   z-index: 2;
@@ -99,20 +100,28 @@
 .cell-mine {
   background-color: rgba(255, 0, 0, 0.4);
   background-image: url('fired.svg');
-  color: yellow;
 }
 
 .cell-mark {
+  background-color: rgba(255, 0, 0, 0.4);
   background-image: url("target.svg");
-  box-shadow: 0 0 6px 2px rgba(255, 0, 0, 0.6);
+  /*box-shadow: 0 0 6px 2px rgba(255, 0, 0, 0.6);*/
   z-index: 1;
 }
 
 .FlagsCounter {
-  color: red;
+  color: green;
 }
 
 .Timer {
   color: green;
 }
 
+.Reset {
+  cursor: pointer;
+}
+
+.Reset img {
+  width: 20px;
+  height: auto;
+}

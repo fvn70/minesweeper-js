@@ -1,17 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import logo from './logo.svg';
+import cool from './cool.svg';
+import crying from './crying.svg';
+import eyeglass from './eyeglass.svg';
+import sunglass from './sunglass.svg';
 import './App.css';
 
 const mineNumber = 10;
 const sizeX = 8;
 const sizeY = 9;
+const states = ['wait', 'game', 'mine', 'win'];
+let status = 'wait';
+let cntOpen = 0;
 
 function App() {
-  return (
-      <div className="App">
-          <Game/>
-      </div>
-  );
+    return (
+        <div className="App">
+            <Game/>
+        </div>
+    );
 }
 
 export default App;
@@ -20,24 +27,60 @@ class Game extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
+            id: 10000,
             flags: 10,
             startGame: false,
             endGame: false
         };
     }
 
-    flagChanged = () => {
-        this.setState(prev => ({flags: prev.flags - 1}));
+    onReset = () => {
+        cntOpen = 0;
+        status = 'wait';
+        this.setState({
+            id: Math.floor(Math.random() * 10000),
+            flags: 10,
+            startGame: false,
+            endGame: false
+        });
+    }
+
+    flagChanged = (mark) => {
+        let flg = this.state.flags;
+        flg = (mark) ? flg + 1 : flg - 1;
+        this.setState({flags: flg});
+        this.stateChanged(true, false);
     }
 
     stateChanged = (start, end) => {
-        this.setState({startGame: start});
-        this.setState({endGame: end});
+        this.setState((state) => {
+            return {startGame: start}});
+        this.setState((state) => {
+            return {endGame: end}});
+        this.setStatus(start, end);
+        if (status === 'win') {
+            this.setState((state) => {
+                return {startGame: false, endGame: true}});
+        }
+    }
+
+    setStatus = (start, end) => {
+        if (cntOpen > 1 && end) {
+            status = 'mine';
+        } else if (start) {
+            if (this.state.flags === 0 && cntOpen >= 62) {
+                status = 'win'
+            } else {
+                status = 'game';
+            }
+        } else {
+            status = 'wait';
+        }
     }
 
     render() {
         return (
-            <div className="Game">
+            <div className="Game" key={this.state.id}>
                 <header className="App-header">
                     <p>Minesweeper</p>
                     <img src={logo} className="App-logo" alt="logo" />
@@ -45,11 +88,14 @@ class Game extends React.Component {
                 <Controls
                     flags={this.state.flags}
                     start={this.state.startGame}
+                    onHandleButton={this.onReset}
                 />
                 <Field
                     flags={this.state.flags}
+                    cntOpen={this.state.cntOpen}
                     onFlagChange={this.flagChanged}
                     onStartGame={this.stateChanged}
+                    onNewGame={this.onReset}
                     endGame={this.state.endGame}
                 />
             </div>
@@ -57,7 +103,7 @@ class Game extends React.Component {
     }
 }
 
-// props: (flags, start, stop)
+// props: (flags, start, onHandleButton)
 class Controls extends React.Component {
     constructor(props) {
         super(props);
@@ -65,14 +111,11 @@ class Controls extends React.Component {
     }
 
     render() {
-        const button = (this.props.start) ? "Start" : "Stop";
         return (
             <div className="Panel">
                 <p className="FlagsCounter">{this.props.flags}</p>
-                {/*<button className="Reset">Reset</button>*/}
-                <button className="Reset">{button}</button>
+                <ResetBtn onHandleButton={this.props.onHandleButton}/>
                 <Timer start={this.props.start}/>
-                {/*<p className="Timer">{this.state.timer}</p>*/}
             </div>
         );
     }
@@ -83,23 +126,31 @@ class Field extends React.Component {
     constructor(props) {
         super(props);
         this.state={ iCell: -1, data: this.mines() }
+        view2d(this.state.data);
     }
 
     handleClick = (v) => {
         const idx = v;
         const cell = this.state.data[idx];
-        const end = this.props.endGame || cell === 'X';
-        const start = idx >= 0 && !end;
-        this.props.onStartGame(start, end);
-        if (cell === '.') {
-            openCells(idx, this.state.data);
-            // view2d(this.state.data);
+        if (cntOpen === 0 && cell === 'X') {
+            // don't start game with a mine
+            this.props.onNewGame();
+        } else {
+            const end = this.props.endGame || cell === 'X';
+            const start = idx >= 0 && !end;
+            if (cell === '.') {
+                openCells(idx, this.state.data);
+                view2d(this.state.data);
+            } else {
+                cntOpen++;
+            }
+            this.props.onStartGame(start, end);
         }
     }
 
-    handleRClick = (e) => {
+    handleRClick = (mark) => {
         if (this.props.flags > 0) {
-            this.props.onFlagChange();
+            this.props.onFlagChange(mark);
         }
     }
 
@@ -132,8 +183,6 @@ class Field extends React.Component {
             }
         }
         this.cntMines(arr);
-
-        // view2d(arr);
         return arr;
     }
 
@@ -179,23 +228,29 @@ class Cell extends React.Component {
     }
 
     handleClick = () => {
-        this.setState(prev => ({
-            isClosed: false }));
-        this.props.onCellClick(this.props.iCell);
+        if (!this.state.isMarked) {
+            this.setState(prev => ({
+                isClosed: false
+            }));
+            this.props.onCellClick(this.props.iCell);
+        }
     }
 
     handleRClick = (e) => {
         e.preventDefault();
         if (this.props.flags > 0 && this.state.isClosed) {
-            this.props.onSetMark();
             this.setState(prev => ({
                 isMarked: !prev.isMarked
             }));
+            this.props.onSetMark(this.state.isMarked);
         }
     }
 
     render() {
-        const isOpen = this.props.cell === '0';
+        const value = this.props.cell;
+        const isOpen = this.props.cell <= 0
+            || this.props.endGame && this.props.cell === 'X';
+
         if (isOpen && this.state.isClosed) {
             this.setState({isClosed: false});
         }
@@ -205,16 +260,15 @@ class Cell extends React.Component {
             if (this.state.isMined) {
                 cls += " cell-mine"
             }
-        } else if (this.state.isMarked) {
+        } else if (this.state.isMarked && !this.props.endGame) {
             cls += " cell-mark"
         }
-        // console.log('Cell=', cls, this.props.cell, this.props.iCell, isOpen)
         return (
             <div className={cls}
                  onClick={this.handleClick}
                  onContextMenu={this.handleRClick}>
-                { this.state.isClosed || isOpen
-                    ? '' : this.props.cell
+                { this.state.isClosed || value === 0 || isNaN(value)
+                    ? '' : Math.abs(parseInt(this.props.cell))
                 }
             </div>
         )
@@ -230,25 +284,27 @@ function view2d(arr) {
 }
 
 function openCells(idx, arr) {
-    // console.log("openCells=", idx, arr[idx]);
     if (arr[idx] === '.') {
-        // console.log("idx=", idx, arr[idx]);
-        arr[idx] = '0';
+        arr[idx] = 0;
+        cntOpen++;
         let r = Math.trunc(idx / sizeX);
         let c = idx % sizeX;
         for (let i = r - 1; i <= r + 1; i++) {
             for (let j = c - 1; j <= c + 1; j++) {
                 if (0 <= i && i < sizeY && 0 <= j && j < sizeX) {
                     let k = i * sizeX + j;
-                    // console.log("k=", k, arr[k]);
-                    if (k !== idx && arr[k] === '.') {
+                    if (k !== idx && (arr[k] > 0 && arr[k] < 9)) {
+                        arr[k] = -arr[k];
+                        cntOpen++;
+                    }
+                    if (k !== idx && (arr[k] === '.')) {
                         openCells(k, arr);
                     }
                 }
             }
         }
     } else {
-        return
+        return 0;
     }
 }
 
@@ -281,3 +337,15 @@ const Timer = (props) => {
         <p className="Timer">{`${m}:${s > 9 ? s : '0' + s}`}</p>
     )
 }
+
+const ResetBtn = (props) => {
+    let img = (status === 'wait') ? sunglass :
+        (status === 'game') ? eyeglass :
+            (status === 'mine') ? crying : cool;
+
+    return (
+        <button className="Reset"
+                onClick={props.onHandleButton}><img src={img} /></button>
+    )
+}
+
